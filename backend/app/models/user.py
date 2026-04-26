@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 
-from beanie import Document, Indexed
+from beanie import Document
 from pydantic import Field
 from pymongo import IndexModel
 
 
 class User(Document):
     name: str
-    email: Indexed(str, unique=True)  # type: ignore[valid-type]
+    email: str
     password_hash: str
     avatar_url: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
