@@ -12,27 +12,34 @@ export interface User {
 
 export type CircleRole = "admin" | "member";
 
-export interface CircleMember {
+export interface CircleMemberResponse {
   user_id: string;
+  name: string;
+  email: string;
+  avatar_url: string | null;
   role: CircleRole;
   joined_at: string;
-  // Hydrated fields (from backend when detail is fetched)
-  name?: string;
-  email?: string;
-  avatar_url?: string | null;
 }
 
+// List view (from GET /circles/)
 export interface Circle {
   id: string;
   name: string;
   description: string;
   invite_code: string;
-  created_by: string;
-  members: CircleMember[];
   member_count: number;
+  your_role: CircleRole;
   created_at: string;
-  // Viewer's role in this circle
-  role: CircleRole;
+}
+
+// Detail view (from GET /circles/:id)
+export interface CircleDetail {
+  id: string;
+  name: string;
+  description: string;
+  invite_code: string;
+  created_at: string;
+  members: CircleMemberResponse[];
 }
 
 export interface NetBalance {
