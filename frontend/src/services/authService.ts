@@ -2,11 +2,16 @@ import api from "./api";
 import type { TokenResponse, User } from "@/types";
 
 export const authService = {
-  async register(name: string, email: string, password: string): Promise<User> {
+  async sendOtp(email: string): Promise<void> {
+    await api.post("/auth/request-otp", { email });
+  },
+
+  async register(name: string, email: string, password: string, otp: string): Promise<User> {
     const { data } = await api.post<User>("/auth/register", {
       name,
       email,
       password,
+      otp,
     });
     return data;
   },

@@ -29,14 +29,22 @@ export function useRegister() {
       name,
       email,
       password,
+      otp,
     }: {
       name: string;
       email: string;
       password: string;
-    }) => authService.register(name, email, password),
+      otp: string;
+    }) => authService.register(name, email, password, otp),
     onSuccess: () => {
       navigate("/login");
     },
+  });
+}
+
+export function useSendOtp() {
+  return useMutation({
+    mutationFn: (email: string) => authService.sendOtp(email),
   });
 }
 

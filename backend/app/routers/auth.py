@@ -22,6 +22,14 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
+from app.models.verification import SendOtpRequest
+
+@router.post("/request-otp", status_code=status.HTTP_200_OK)
+async def request_otp(req: SendOtpRequest):
+    await auth_service.request_otp(req)
+    return {"message": "OTP sent successfully"}
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(req: RegisterRequest) -> UserResponse:
     user = await auth_service.register(req)

@@ -14,6 +14,7 @@ from app.models.charge import Charge
 from app.models.circle import Circle
 from app.models.clearance import Clearance
 from app.models.user import User
+from app.models.verification import EmailVerification
 from app.routers import auth, charges, circles, clearances
 
 settings = get_settings()
@@ -27,7 +28,7 @@ async def lifespan(app: FastAPI):
     client = AsyncIOMotorClient(settings.MONGO_URL)
     await init_beanie(
         database=client[settings.DB_NAME],
-        document_models=[User, Circle, Charge, Clearance],
+        document_models=[User, Circle, Charge, Clearance, EmailVerification],
     )
 
     # Ensure uploads directory exists

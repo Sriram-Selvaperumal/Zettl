@@ -1,11 +1,12 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "react-router-dom";
-import { Loader2, Zap, Mail, Lock, User } from "lucide-react";
+import { Loader2, Zap, Mail, Lock, User, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useRegister } from "@/hooks/useAuth";
+import { useRegister, useSendOtp } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 const registerSchema = z
@@ -24,20 +25,42 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const register_ = useRegister();
+  const sendOtp_ = useSendOtp();
+
+  const [step, setStep] = useState<"details" | "otp">("details");
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
 
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = (data: RegisterForm) => {
+  const onDetailsSubmit = (data: RegisterForm) => {
+    sendOtp_.mutate(data.email, {
+      onSuccess: () => {
+        setStep("otp");
+      },
+    });
+  };
+
+  const onOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setOtpError("OTP must be exactly 6 digits");
+      return;
+    }
+    setOtpError("");
+    const data = getValues();
     register_.mutate({
       name: data.name,
       email: data.email,
       password: data.password,
+      otp: otp,
     });
   };
 
@@ -65,10 +88,12 @@ export default function Register() {
         <div className="glass-card rounded-2xl p-8 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-foreground mb-1">
-              Create your account
+              {step === "details" ? "Create your account" : "Verify Email"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Join thousands splitting smarter
+              {step === "details"
+                ? "Join thousands splitting smarter"
+                : `We sent a code to ${getValues("email")}`}
             </p>
           </div>
 
@@ -78,126 +103,187 @@ export default function Register() {
             </div>
           )}
 
-          {register_.error && (
+          {sendOtp_.error && step === "details" && (
             <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-              {(register_.error as any)?.response?.data?.detail ??
-                "Something went wrong. Try again."}
+              {(sendOtp_.error as any)?.response?.data?.detail ??
+                "Failed to send OTP. Try again."}
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Name */}
-            <div className="space-y-1.5">
-              <label htmlFor="reg-name" className="text-sm font-medium">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="reg-name"
-                  placeholder="Arjun Sharma"
-                  className={cn(
-                    "pl-9 bg-muted/50",
-                    errors.name && "border-destructive"
-                  )}
-                  {...register("name")}
-                />
-              </div>
-              {errors.name && (
-                <p className="text-xs text-destructive">{errors.name.message}</p>
-              )}
+          {register_.error && step === "otp" && (
+            <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              {(register_.error as any)?.response?.data?.detail ??
+                "Verification failed. Try again."}
             </div>
+          )}
 
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label htmlFor="reg-email" className="text-sm font-medium">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="reg-email"
-                  type="email"
-                  placeholder="arjun@example.com"
-                  className={cn(
-                    "pl-9 bg-muted/50",
-                    errors.email && "border-destructive"
-                  )}
-                  {...register("email")}
-                />
+          {step === "details" ? (
+            <form onSubmit={handleSubmit(onDetailsSubmit)} className="space-y-4">
+              {/* Name */}
+              <div className="space-y-1.5">
+                <label htmlFor="reg-name" className="text-sm font-medium">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="reg-name"
+                    placeholder="Arjun Sharma"
+                    className={cn(
+                      "pl-9 bg-muted/50",
+                      errors.name && "border-destructive"
+                    )}
+                    {...register("name")}
+                  />
+                </div>
+                {errors.name && (
+                  <p className="text-xs text-destructive">{errors.name.message}</p>
+                )}
               </div>
-              {errors.email && (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
-              )}
-            </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="reg-password" className="text-sm font-medium">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="reg-password"
-                  type="password"
-                  placeholder="Min. 8 characters"
-                  className={cn(
-                    "pl-9 bg-muted/50",
-                    errors.password && "border-destructive"
-                  )}
-                  {...register("password")}
-                />
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label htmlFor="reg-email" className="text-sm font-medium">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="reg-email"
+                    type="email"
+                    placeholder="arjun@example.com"
+                    className={cn(
+                      "pl-9 bg-muted/50",
+                      errors.email && "border-destructive"
+                    )}
+                    {...register("email")}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-xs text-destructive">{errors.email.message}</p>
+                )}
               </div>
-              {errors.password && (
-                <p className="text-xs text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
 
-            {/* Confirm Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="reg-confirm" className="text-sm font-medium">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="reg-confirm"
-                  type="password"
-                  placeholder="••••••••"
-                  className={cn(
-                    "pl-9 bg-muted/50",
-                    errors.confirmPassword && "border-destructive"
-                  )}
-                  {...register("confirmPassword")}
-                />
+              {/* Password */}
+              <div className="space-y-1.5">
+                <label htmlFor="reg-password" className="text-sm font-medium">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="reg-password"
+                    type="password"
+                    placeholder="Min. 8 characters"
+                    className={cn(
+                      "pl-9 bg-muted/50",
+                      errors.password && "border-destructive"
+                    )}
+                    {...register("password")}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-xs text-destructive">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
-              {errors.confirmPassword && (
-                <p className="text-xs text-destructive">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
 
-            <Button
-              id="register-submit"
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={register_.isPending}
-            >
-              {register_.isPending ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  Creating account…
-                </>
-              ) : (
-                "Create Account"
-              )}
-            </Button>
-          </form>
+              {/* Confirm Password */}
+              <div className="space-y-1.5">
+                <label htmlFor="reg-confirm" className="text-sm font-medium">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="reg-confirm"
+                    type="password"
+                    placeholder="••••••••"
+                    className={cn(
+                      "pl-9 bg-muted/50",
+                      errors.confirmPassword && "border-destructive"
+                    )}
+                    {...register("confirmPassword")}
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-destructive">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <Button
+                id="register-submit"
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={sendOtp_.isPending}
+              >
+                {sendOtp_.isPending ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" />
+                    Sending Code…
+                  </>
+                ) : (
+                  "Send Code"
+                )}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={onOtpSubmit} className="space-y-4 animate-fade-in">
+              <div className="space-y-1.5">
+                <label htmlFor="otp-input" className="text-sm font-medium">
+                  6-Digit OTP
+                </label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="otp-input"
+                    type="text"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    className={cn(
+                      "pl-9 bg-muted/50 text-center tracking-widest font-mono text-lg",
+                      otpError && "border-destructive"
+                    )}
+                  />
+                </div>
+                {otpError && (
+                  <p className="text-xs text-destructive">{otpError}</p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setStep("details")}
+                  disabled={register_.isPending}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={register_.isPending || otp.length !== 6}
+                >
+                  {register_.isPending ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2" />
+                      Verifying…
+                    </>
+                  ) : (
+                    "Verify & Register"
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
