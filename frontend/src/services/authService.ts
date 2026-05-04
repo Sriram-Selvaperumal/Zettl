@@ -43,4 +43,18 @@ export const authService = {
     const { data } = await api.post<TokenResponse>("/auth/refresh");
     return data;
   },
+
+  async updateProfile(data: { name?: string; mobile?: string; upi_id?: string }): Promise<User> {
+    const { data: user } = await api.patch<User>("/auth/profile", data);
+    return user;
+  },
+
+  async uploadAvatar(file: File): Promise<User> {
+    const form = new FormData();
+    form.append("file", file);
+    const { data: user } = await api.post<User>("/auth/avatar", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return user;
+  },
 };

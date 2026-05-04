@@ -20,3 +20,12 @@ async def create(name: str, email: str, password_hash: str) -> User:
     user = User(name=name, email=email, password_hash=password_hash)
     await user.insert()
     return user
+
+
+async def update_profile(user: User, updates: dict) -> User:
+    """Updates only the fields present in the updates dict (excluding None values)."""
+    for field, value in updates.items():
+        if value is not None:
+            setattr(user, field, value)
+    await user.save()
+    return user

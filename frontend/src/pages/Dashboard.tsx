@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Zap, Plus, LogIn, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { useMyCircles, useCreateCircle, useJoinCircle } from "@/hooks/useCircles
 import { useAuthStore } from "@/store/authStore";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { data: circles, isLoading } = useMyCircles();
   const createCircle = useCreateCircle();
@@ -62,12 +64,19 @@ export default function Dashboard() {
             </div>
             <span className="font-bold text-lg gradient-text">Zettl</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground hidden sm:block">
+          <div
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => navigate("/profile")}
+          >
+            <span className="text-sm text-muted-foreground hidden sm:block group-hover:text-foreground transition-colors">
               Hey, {user?.name?.split(" ")[0]} 👋
             </span>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-zettl-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
-              {user?.name?.[0]?.toUpperCase()}
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-zettl-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold ring-2 ring-transparent group-hover:ring-zettl-500 transition-all">
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.[0]?.toUpperCase()
+              )}
             </div>
           </div>
         </div>

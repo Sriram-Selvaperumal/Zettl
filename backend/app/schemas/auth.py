@@ -24,6 +24,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class UpdateProfileRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=100)
+    mobile: str | None = Field(default=None, max_length=15)
+    upi_id: str | None = Field(default=None, max_length=50)
+
+
 class RefreshRequest(BaseModel):
     """Used when refresh token is passed in body (fallback — cookie is preferred)."""
     refresh_token: str
@@ -41,6 +47,8 @@ class UserResponse(BaseModel):
     name: str
     email: str
     avatar_url: str | None
+    mobile: str | None
+    upi_id: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

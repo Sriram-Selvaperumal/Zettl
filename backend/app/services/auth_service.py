@@ -10,7 +10,7 @@ from app.core.security import (
 from app.models.user import User
 from app.models.verification import EmailVerification, SendOtpRequest
 from app.repositories import user_repo
-from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse
+from app.schemas.auth import LoginRequest, RegisterRequest, UpdateProfileRequest, UserResponse
 from app.services.email_service import send_otp_email
 import random
 from datetime import datetime, timedelta, timezone
@@ -22,8 +22,22 @@ def _to_user_response(user: User) -> UserResponse:
         name=user.name,
         email=user.email,
         avatar_url=user.avatar_url,
+        mobile=user.mobile,
+        upi_id=user.upi_id,
         created_at=user.created_at,
     )
+
+
+async def update_profile(req: UpdateProfileRequest, current_user: User) -> UserResponse:
+    updates = req.model_dump(exclude_none=True)
+    user = await user_repo.update_profile(current_user, updates)
+    return _to_user_response(user)
+
+
+async def update_avatar(avatar_url: str, current_user: User) -> UserResponse:
+    current_user.avatar_url = avatar_url
+    await current_user.save()
+    return _to_user_response(current_user)
 
 
 async def request_otp(req: SendOtpRequest):

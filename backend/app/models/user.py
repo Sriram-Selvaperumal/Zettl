@@ -10,6 +10,8 @@ class User(Document):
     email: str
     password_hash: str
     avatar_url: str | None = None
+    mobile: str | None = None
+    upi_id: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:

@@ -7,6 +7,7 @@ import Dashboard from "@/pages/Dashboard";
 import CirclePage from "@/pages/CirclePage";
 import NewCharge from "@/pages/NewCharge";
 import ChargeDetail from "@/pages/ChargeDetail";
+import ProfilePage from "@/pages/Profile";
 import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient({
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="/circle/:id" element={<CirclePage />} />
         <Route path="/circle/:id/charge/new" element={<NewCharge />} />
         <Route path="/charge/:id" element={<ChargeDetail />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       {/* Fallback */}

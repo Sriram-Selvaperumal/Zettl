@@ -1,9 +1,14 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, File, Response, UploadFile, status
+import aiofiles, os, uuid
 
 from app.core.dependencies import get_current_user, get_refresh_token
+from app.core.config import get_settings
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.models.verification import SendOtpRequest
+from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UpdateProfileRequest, UserResponse
 from app.services import auth_service
+
+settings = get_settings()
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -22,8 +27,6 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     )
 
 
-from app.models.verification import SendOtpRequest
-
 @router.post("/request-otp", status_code=status.HTTP_200_OK)
 async def request_otp(req: SendOtpRequest):
     await auth_service.request_otp(req)
@@ -38,6 +41,8 @@ async def register(req: RegisterRequest) -> UserResponse:
         name=user.name,
         email=user.email,
         avatar_url=user.avatar_url,
+        mobile=user.mobile,
+        upi_id=user.upi_id,
         created_at=user.created_at,
     )
 
@@ -67,3 +72,34 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserResponse
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response) -> None:
     response.delete_cookie(key=REFRESH_COOKIE_KEY)
+
+
+@router.patch("/profile", response_model=UserResponse)
+async def update_profile(
+    req: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
+    return await auth_service.update_profile(req, current_user)
+
+
+@router.post("/avatar", response_model=UserResponse)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
+    # Validate file type
+    if not file.content_type or not file.content_type.startswith("image/"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Only image files are allowed.")
+
+    ext = file.filename.split(".")[-1] if file.filename else "jpg"
+    filename = f"{uuid.uuid4()}.{ext}"
+    save_path = os.path.join(settings.UPLOAD_DIR, filename)
+
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    async with aiofiles.open(save_path, "wb") as f:
+        content = await file.read()
+        await f.write(content)
+
+    avatar_url = f"/uploads/{filename}"
+    return await auth_service.update_avatar(avatar_url, current_user)
