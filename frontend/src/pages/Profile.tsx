@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Loader2, User, Phone, CreditCard, Mail, Zap, Check } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, User, Phone, CreditCard, Mail, Zap, Check, AtSign, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/store/authStore";
@@ -179,6 +179,24 @@ export default function ProfilePage() {
               placeholder="Your full name"
               className="bg-muted/50"
             />
+          </div>
+
+          {/* Username — read-only, permanent */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <AtSign className="w-4 h-4 text-muted-foreground" /> Username
+              <span className="ml-auto flex items-center gap-1 text-xs text-amber-400">
+                <Lock className="w-3 h-3" /> Permanent
+              </span>
+            </label>
+            <Input
+              value={`@${user?.username ?? ""}`}
+              disabled
+              className="bg-muted/30 text-muted-foreground cursor-not-allowed font-mono"
+            />
+            <p className="text-xs text-amber-400/80">
+              Username is permanent and cannot be changed once set.
+            </p>
           </div>
 
           {/* Email (read-only) */}

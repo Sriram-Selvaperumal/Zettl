@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 import aiofiles, os, uuid
 
 from app.core.dependencies import get_current_user, get_refresh_token
@@ -33,12 +33,19 @@ async def request_otp(req: SendOtpRequest):
     return {"message": "OTP sent successfully"}
 
 
+@router.get("/check-username", status_code=status.HTTP_200_OK)
+async def check_username(username: str = Query(..., min_length=3, max_length=30)) -> dict:
+    """Check if a username is available. No auth required."""
+    return await auth_service.check_username(username)
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(req: RegisterRequest) -> UserResponse:
     user = await auth_service.register(req)
     return UserResponse(
         id=str(user.id),
         name=user.name,
+        username=user.username,
         email=user.email,
         avatar_url=user.avatar_url,
         mobile=user.mobile,

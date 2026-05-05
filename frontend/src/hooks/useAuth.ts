@@ -27,15 +27,17 @@ export function useRegister() {
   return useMutation({
     mutationFn: ({
       name,
+      username,
       email,
       password,
       otp,
     }: {
       name: string;
+      username: string;
       email: string;
       password: string;
       otp: string;
-    }) => authService.register(name, email, password, otp),
+    }) => authService.register(name, username, email, password, otp),
     onSuccess: () => {
       navigate("/login");
     },

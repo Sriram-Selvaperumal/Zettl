@@ -6,9 +6,10 @@ export const authService = {
     await api.post("/auth/request-otp", { email });
   },
 
-  async register(name: string, email: string, password: string, otp: string): Promise<User> {
+  async register(name: string, username: string, email: string, password: string, otp: string): Promise<User> {
     const { data } = await api.post<User>("/auth/register", {
       name,
+      username,
       email,
       password,
       otp,
@@ -41,6 +42,11 @@ export const authService = {
 
   async refresh(): Promise<TokenResponse> {
     const { data } = await api.post<TokenResponse>("/auth/refresh");
+    return data;
+  },
+
+  async checkUsername(username: string): Promise<{ available: boolean; username: string }> {
+    const { data } = await api.get("/auth/check-username", { params: { username } });
     return data;
   },
 

@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 class RegisterRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
+    username: str = Field(..., min_length=3, max_length=30)
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     otp: str = Field(..., min_length=6, max_length=6)
@@ -17,6 +18,17 @@ class RegisterRequest(BaseModel):
         if not v.strip():
             raise ValueError("Name cannot be blank")
         return v.strip()
+
+    @field_validator("username")
+    @classmethod
+    def username_valid(cls, v: str) -> str:
+        import re
+        v = v.strip().lower()
+        if not re.match(r'^[a-z0-9_]+$', v):
+            raise ValueError("Username can only contain letters, numbers, and underscores")
+        if v.startswith('_') or v.endswith('_'):
+            raise ValueError("Username cannot start or end with an underscore")
+        return v
 
 
 class LoginRequest(BaseModel):
@@ -45,6 +57,7 @@ class TokenResponse(BaseModel):
 class UserResponse(BaseModel):
     id: str
     name: str
+    username: str
     email: str
     avatar_url: str | None
     mobile: str | None

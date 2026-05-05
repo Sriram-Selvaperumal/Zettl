@@ -7,6 +7,7 @@ from pymongo import IndexModel
 
 class User(Document):
     name: str
+    username: str
     email: str
     password_hash: str
     avatar_url: str | None = None
@@ -18,6 +19,7 @@ class User(Document):
         name = "users"
         indexes = [
             IndexModel("email", unique=True),
+            IndexModel("username", unique=True),
         ]
 
     class Config:

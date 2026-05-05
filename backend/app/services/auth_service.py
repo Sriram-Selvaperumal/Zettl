@@ -20,12 +20,19 @@ def _to_user_response(user: User) -> UserResponse:
     return UserResponse(
         id=str(user.id),
         name=user.name,
+        username=user.username,
         email=user.email,
         avatar_url=user.avatar_url,
         mobile=user.mobile,
         upi_id=user.upi_id,
         created_at=user.created_at,
     )
+
+
+async def check_username(username: str) -> dict:
+    """Returns availability status for a given username."""
+    existing = await user_repo.get_by_username(username)
+    return {"available": existing is None, "username": username.lower()}
 
 
 async def update_profile(req: UpdateProfileRequest, current_user: User) -> UserResponse:
@@ -75,13 +82,22 @@ async def request_otp(req: SendOtpRequest):
 
 
 async def register(req: RegisterRequest) -> User:
-    existing = await user_repo.get_by_email(req.email)
-    if existing:
+    # Check email uniqueness
+    existing_email = await user_repo.get_by_email(req.email)
+    if existing_email:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists",
         )
-        
+
+    # Check username uniqueness
+    existing_username = await user_repo.get_by_username(req.username)
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username is already taken",
+        )
+
     # Verify OTP
     verification = await EmailVerification.find_one({"email": req.email})
     if not verification:
@@ -89,23 +105,24 @@ async def register(req: RegisterRequest) -> User:
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No OTP requested or OTP has expired",
         )
-        
+
     if not verify_password(req.otp, verification.otp_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid OTP",
         )
-        
+
     hashed = hash_password(req.password)
     user = await user_repo.create(
         name=req.name,
+        username=req.username,
         email=req.email,
         password_hash=hashed,
     )
-    
+
     # Delete the verification doc now that it's used
     await verification.delete()
-    
+
     return user
 
 
