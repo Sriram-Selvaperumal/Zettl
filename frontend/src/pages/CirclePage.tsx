@@ -7,6 +7,7 @@ import {
   Users,
   Zap,
   Plus,
+  Share2,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export default function CirclePage() {
   const currentUser = useAuthStore((s) => s.user);
   const { data: circle, isLoading, error } = useCircleDetail(id!);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const handleCopyCode = () => {
     if (!circle) return;
@@ -93,7 +95,7 @@ export default function CirclePage() {
             </div>
           </div>
 
-          {/* Invite code */}
+          {/* Invite section */}
           <div className="flex items-center gap-3 mt-4 p-3 rounded-xl bg-muted/50 border border-border">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground mb-0.5">Invite Code</p>
@@ -101,20 +103,40 @@ export default function CirclePage() {
                 {circle.invite_code}
               </p>
             </div>
-            <Button
-              id="copy-invite-code"
-              variant="outline"
-              size="sm"
-              onClick={handleCopyCode}
-              className="shrink-0"
-            >
-              {copied ? (
-                <Check className="w-4 h-4 text-green-400" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
-              <span className="ml-1.5 text-xs">{copied ? "Copied!" : "Copy"}</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                id="copy-invite-link"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/join/${circle.invite_code}`);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2000);
+                }}
+                className="shrink-0 bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary hover:text-primary"
+              >
+                {copiedLink ? (
+                  <Check className="w-4 h-4 text-green-400" />
+                ) : (
+                  <Share2 className="w-4 h-4" />
+                )}
+                <span className="ml-1.5 text-xs">{copiedLink ? "Link Copied!" : "Share Link"}</span>
+              </Button>
+              <Button
+                id="copy-invite-code"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyCode}
+                className="shrink-0"
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-400" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+                <span className="ml-1.5 text-xs">{copied ? "Copied!" : "Copy Code"}</span>
+              </Button>
+            </div>
           </div>
         </div>
 
