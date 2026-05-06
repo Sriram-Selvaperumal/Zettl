@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useJoinCircle, useCirclePreview } from "@/hooks/useCircles";
 import { Loader2, Zap, CheckCircle2, XCircle, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
 
 export default function JoinCirclePage() {
   const { inviteCode } = useParams<{ inviteCode: string }>();
@@ -81,7 +80,7 @@ export default function JoinCirclePage() {
             </div>
             
             <p className="text-xs text-muted-foreground">
-              Created on {format(new Date(preview.created_at), "MMM d, yyyy")}
+              Created on {new Date(preview.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
             </p>
 
             <div className="pt-2 flex gap-3">
