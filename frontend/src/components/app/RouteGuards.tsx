@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 
@@ -23,14 +24,16 @@ export function ProtectedRoute() {
  */
 export function PublicOnlyRoute() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [returnTo] = useState(() => sessionStorage.getItem("return_to"));
+
+  useEffect(() => {
+    if (isAuthenticated && returnTo) {
+      sessionStorage.removeItem("return_to");
+    }
+  }, [isAuthenticated, returnTo]);
 
   if (isAuthenticated) {
-    const returnTo = sessionStorage.getItem("return_to");
-    if (returnTo) {
-      sessionStorage.removeItem("return_to");
-      return <Navigate to={returnTo} replace />;
-    }
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={returnTo || "/dashboard"} replace />;
   }
 
   return <Outlet />;
