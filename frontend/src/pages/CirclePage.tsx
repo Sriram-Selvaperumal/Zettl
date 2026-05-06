@@ -8,10 +8,12 @@ import {
   Zap,
   Plus,
   Share2,
+  LogOut,
+  UserMinus,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useCircleDetail } from "@/hooks/useCircles";
+import { useCircleDetail, useRemoveMember } from "@/hooks/useCircles";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,7 @@ export default function CirclePage() {
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
   const { data: circle, isLoading, error } = useCircleDetail(id!);
+  const removeMember = useRemoveMember();
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -28,6 +31,20 @@ export default function CirclePage() {
     navigator.clipboard.writeText(circle.invite_code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRemove = (userId: string, isSelf: boolean) => {
+    if (!circle) return;
+    const confirmMsg = isSelf 
+      ? "Are you sure you want to leave this circle?" 
+      : "Are you sure you want to remove this member?";
+    if (confirm(confirmMsg)) {
+      removeMember.mutate({ circleId: circle.id, userId }, {
+        onSuccess: () => {
+          if (isSelf) navigate("/dashboard", { replace: true });
+        }
+      });
+    }
   };
 
   if (isLoading) {
@@ -181,6 +198,31 @@ export default function CirclePage() {
                 >
                   {member.role}
                 </span>
+
+                {/* Leave / Remove Buttons */}
+                {member.user_id === currentUser?.id ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2"
+                    title="Leave Circle"
+                    onClick={() => handleRemove(member.user_id, true)}
+                    disabled={removeMember.isPending}
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                ) : myMember?.role === "admin" ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2"
+                    title="Remove Member"
+                    onClick={() => handleRemove(member.user_id, false)}
+                    disabled={removeMember.isPending}
+                  >
+                    <UserMinus className="w-4 h-4" />
+                  </Button>
+                ) : null}
               </div>
             ))}
           </div>

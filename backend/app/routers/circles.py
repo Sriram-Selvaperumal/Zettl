@@ -5,6 +5,7 @@ from app.models.user import User
 from app.schemas.circle import (
     CircleDetailResponse,
     CircleResponse,
+    CirclePreviewResponse,
     CreateCircleRequest,
     JoinCircleRequest,
 )
@@ -42,3 +43,20 @@ async def get_circle_detail(
     current_user: User = Depends(get_current_user),
 ) -> CircleDetailResponse:
     return await circle_service.get_circle_detail(circle_id, current_user)
+
+
+@router.get("/invite/{invite_code}", response_model=CirclePreviewResponse)
+async def get_circle_preview(
+    invite_code: str,
+    current_user: User = Depends(get_current_user),
+) -> CirclePreviewResponse:
+    return await circle_service.get_circle_preview(invite_code)
+
+
+@router.delete("/{circle_id}/members/{user_id}")
+async def remove_member(
+    circle_id: str,
+    user_id: str,
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    return await circle_service.remove_member(circle_id, user_id, current_user)

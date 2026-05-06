@@ -1,37 +1,32 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useJoinCircle } from "@/hooks/useCircles";
-import { Loader2, Zap, CheckCircle2, XCircle } from "lucide-react";
+import { useJoinCircle, useCirclePreview } from "@/hooks/useCircles";
+import { Loader2, Zap, CheckCircle2, XCircle, Users, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 export default function JoinCirclePage() {
   const { inviteCode } = useParams<{ inviteCode: string }>();
   const navigate = useNavigate();
   const joinCircle = useJoinCircle();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  
+  const { data: preview, isLoading, error } = useCirclePreview(inviteCode || "");
+  const [joinStatus, setJoinStatus] = useState<"idle" | "success" | "error">("idle");
 
-  useEffect(() => {
-    if (!inviteCode) {
-      setStatus("error");
-      return;
-    }
-
+  const handleJoin = () => {
+    if (!inviteCode) return;
     joinCircle.mutate(inviteCode, {
       onSuccess: (data) => {
-        setStatus("success");
+        setJoinStatus("success");
         setTimeout(() => {
           navigate(`/circle/${data.id}`, { replace: true });
         }, 1500);
       },
-      onError: (err: any) => {
-        // If already a member, backend returns 409 Conflict maybe?
-        // Let's just check if it's already a member. If the error says already a member, we can't easily get the circleId from error.
-        // Actually, let's just let the user go back to dashboard.
-        setStatus("error");
+      onError: () => {
+        setJoinStatus("error");
       },
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inviteCode]);
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
@@ -46,15 +41,72 @@ export default function JoinCirclePage() {
           <Zap className="w-8 h-8 text-white" />
         </div>
 
-        {status === "loading" && (
+        {isLoading && (
           <div className="space-y-4">
-            <h2 className="text-xl font-bold">Joining Circle...</h2>
+            <h2 className="text-xl font-bold">Looking up Circle...</h2>
             <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-            <p className="text-sm text-muted-foreground">Using invite code: {inviteCode}</p>
           </div>
         )}
 
-        {status === "success" && (
+        {error && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Invalid Invite Link</h2>
+            <XCircle className="w-12 h-12 mx-auto text-destructive" />
+            <p className="text-sm text-muted-foreground">
+              {(error as any)?.response?.data?.detail ?? "This invite code is invalid or has expired."}
+            </p>
+            <Button
+              className="w-full mt-4"
+              onClick={() => navigate("/dashboard", { replace: true })}
+            >
+              Back to Dashboard
+            </Button>
+          </div>
+        )}
+
+        {preview && joinStatus === "idle" && !joinCircle.isPending && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{preview.name}</h2>
+              {preview.description && (
+                <p className="text-sm text-muted-foreground">{preview.description}</p>
+              )}
+            </div>
+            
+            <div className="flex items-center justify-center gap-4 text-sm font-medium">
+              <span className="flex items-center gap-1.5 text-foreground bg-muted/50 px-3 py-1.5 rounded-full">
+                <Users className="w-4 h-4 text-zettl-400" />
+                {preview.member_count} member{preview.member_count !== 1 && "s"}
+              </span>
+            </div>
+            
+            <p className="text-xs text-muted-foreground">
+              Created on {format(new Date(preview.created_at), "MMM d, yyyy")}
+            </p>
+
+            <div className="pt-2 flex gap-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/dashboard", { replace: true })}
+              >
+                Cancel
+              </Button>
+              <Button className="w-full" onClick={handleJoin}>
+                Join Circle <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {joinCircle.isPending && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Joining...</h2>
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
+          </div>
+        )}
+
+        {joinStatus === "success" && (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Joined Successfully!</h2>
             <CheckCircle2 className="w-12 h-12 mx-auto text-green-400" />
@@ -62,12 +114,12 @@ export default function JoinCirclePage() {
           </div>
         )}
 
-        {status === "error" && (
+        {joinStatus === "error" && (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Failed to Join</h2>
             <XCircle className="w-12 h-12 mx-auto text-destructive" />
             <p className="text-sm text-muted-foreground">
-              {(joinCircle.error as any)?.response?.data?.detail ?? "Invalid or expired invite code."}
+              {(joinCircle.error as any)?.response?.data?.detail ?? "Could not join circle."}
             </p>
             <Button
               className="w-full mt-4"

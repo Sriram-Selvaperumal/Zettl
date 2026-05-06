@@ -6,6 +6,7 @@ from app.schemas.circle import (
     CircleDetailResponse,
     CircleMemberResponse,
     CircleResponse,
+    CirclePreviewResponse,
     CreateCircleRequest,
     JoinCircleRequest,
 )
@@ -97,3 +98,56 @@ async def get_circle_detail(circle_id: str, current_user: User) -> CircleDetailR
         created_at=circle.created_at,
         members=member_responses,
     )
+
+
+async def get_circle_preview(invite_code: str) -> CirclePreviewResponse:
+    circle = await circle_repo.get_by_invite_code(invite_code)
+    if not circle:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid invite code. No circle found.",
+        )
+    return CirclePreviewResponse(
+        id=str(circle.id),
+        name=circle.name,
+        description=circle.description,
+        member_count=len(circle.members),
+        created_at=circle.created_at,
+    )
+
+
+async def remove_member(circle_id: str, user_id_to_remove: str, current_user: User) -> dict:
+    circle = await circle_repo.get_by_id(circle_id)
+    if not circle:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circle not found.")
+
+    my_role = _get_role(circle, current_user.id)
+    member_ids = [str(m.user_id) for m in circle.members]
+    
+    if str(current_user.id) not in member_ids:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member.")
+
+    is_self = str(current_user.id) == user_id_to_remove
+
+    if not is_self and my_role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only admins can remove other members.")
+
+    if user_id_to_remove not in member_ids:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User is not a member.")
+
+    # Prevent last admin from leaving if there are other members
+    if is_self and my_role == "admin":
+        admin_count = sum(1 for m in circle.members if m.role == "admin")
+        if admin_count == 1 and len(circle.members) > 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You are the last admin. Promote someone else before leaving."
+            )
+
+    await circle_repo.remove_member(circle, user_id_to_remove)
+
+    if len(circle.members) == 0:
+        await circle_repo.delete_circle(circle)
+        return {"message": "Circle deleted as it has no members."}
+
+    return {"message": "Member removed successfully."}

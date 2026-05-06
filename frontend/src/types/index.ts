@@ -35,6 +35,14 @@ export interface Circle {
   created_at: string;
 }
 
+export interface CirclePreview {
+  id: string;
+  name: string;
+  description: string;
+  member_count: number;
+  created_at: string;
+}
+
 // Detail view (from GET /circles/:id)
 export interface CircleDetail {
   id: string;

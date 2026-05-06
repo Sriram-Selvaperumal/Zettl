@@ -35,6 +35,14 @@ class CircleResponse(BaseModel):
     created_at: datetime
 
 
+class CirclePreviewResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+    member_count: int
+    created_at: datetime
+
+
 class CircleDetailResponse(BaseModel):
     id: str
     name: str

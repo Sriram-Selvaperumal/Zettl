@@ -45,3 +45,28 @@ export function useJoinCircle() {
     },
   });
 }
+
+// ─── useCirclePreview ─────────────────────────────────────────────────────────
+
+export function useCirclePreview(invite_code: string) {
+  return useQuery({
+    queryKey: ["circlePreview", invite_code],
+    queryFn: () => circleService.getCirclePreview(invite_code),
+    enabled: !!invite_code,
+    retry: false, // Don't retry if invite code is invalid
+  });
+}
+
+// ─── useRemoveMember ──────────────────────────────────────────────────────────
+
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ circleId, userId }: { circleId: string; userId: string }) =>
+      circleService.removeMember(circleId, userId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["circle", variables.circleId] });
+      queryClient.invalidateQueries({ queryKey: ["circles"] });
+    },
+  });
+}

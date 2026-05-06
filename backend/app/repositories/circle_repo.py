@@ -41,3 +41,13 @@ async def add_member(circle: Circle, user_id: PydanticObjectId) -> Circle:
     circle.members.append(new_member)
     await circle.save()
     return circle
+
+
+async def remove_member(circle: Circle, user_id: PydanticObjectId) -> Circle:
+    circle.members = [m for m in circle.members if str(m.user_id) != str(user_id)]
+    await circle.save()
+    return circle
+
+
+async def delete_circle(circle: Circle) -> None:
+    await circle.delete()
