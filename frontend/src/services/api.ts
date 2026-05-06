@@ -90,6 +90,12 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError as Error, null);
         useAuthStore.getState().clearAuth();
+        
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/login' && currentPath !== '/register') {
+          sessionStorage.setItem("return_to", currentPath);
+        }
+        
         window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {

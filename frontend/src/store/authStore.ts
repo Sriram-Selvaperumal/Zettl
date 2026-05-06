@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { User } from "@/types";
 
 interface AuthState {
@@ -11,16 +12,28 @@ interface AuthState {
   clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: null,
-  isAuthenticated: false,
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      isAuthenticated: false,
 
-  setAuth: (user, accessToken) =>
-    set({ user, accessToken, isAuthenticated: true }),
+      setAuth: (user, accessToken) =>
+        set({ user, accessToken, isAuthenticated: true }),
 
-  setAccessToken: (accessToken) => set({ accessToken }),
+      setAccessToken: (accessToken) => set({ accessToken }),
 
-  clearAuth: () =>
-    set({ user: null, accessToken: null, isAuthenticated: false }),
-}));
+      clearAuth: () =>
+        set({ user: null, accessToken: null, isAuthenticated: false }),
+    }),
+    {
+      name: "zettl-auth-storage",
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        // We do NOT persist the accessToken, it stays in memory and gets refreshed via the httpOnly cookie!
+      }),
+    }
+  )
+);
