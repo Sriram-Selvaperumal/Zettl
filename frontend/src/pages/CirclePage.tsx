@@ -211,7 +211,7 @@ export default function CirclePage() {
                   >
                     <LogOut className="w-4 h-4" />
                   </Button>
-                ) : myMember?.role === "admin" ? (
+                ) : myMember?.role === "admin" && member.role !== "admin" ? (
                   <Button
                     variant="ghost"
                     size="icon"

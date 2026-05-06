@@ -135,6 +135,10 @@ async def remove_member(circle_id: str, user_id_to_remove: str, current_user: Us
     if user_id_to_remove not in member_ids:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User is not a member.")
 
+    target_role = _get_role(circle, user_id_to_remove)
+    if not is_self and my_role == "admin" and target_role == "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admins cannot remove other admins.")
+
     # Prevent last admin from leaving if there are other members
     if is_self and my_role == "admin":
         admin_count = sum(1 for m in circle.members if m.role == "admin")
