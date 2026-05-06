@@ -14,13 +14,9 @@ export function useLogin() {
       authService.login(email, password),
     onSuccess: ({ token, user }) => {
       setAuth(user, token.access_token);
-      const returnTo = sessionStorage.getItem("return_to");
-      if (returnTo) {
-        sessionStorage.removeItem("return_to");
-        navigate(returnTo);
-      } else {
-        navigate("/dashboard");
-      }
+      // We don't manually navigate here because updating authStore causes 
+      // PublicOnlyRoute to re-render and immediately <Navigate> declaratively 
+      // (either to return_to or /dashboard).
     },
   });
 }
