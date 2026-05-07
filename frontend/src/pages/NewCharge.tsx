@@ -111,7 +111,12 @@ export default function NewCharge() {
   };
 
   if (circleLoading) return <div className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></div>;
-  if (!circle || !currentUser) return null;
+  if (!circle || !currentUser) return (
+    <div className="p-8 text-center">
+      <p className="text-muted-foreground">Error loading circle or you are not authorized.</p>
+      <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>Go Back</Button>
+    </div>
+  );
 
   return (
     <div className="max-w-xl mx-auto space-y-8 pb-20">
