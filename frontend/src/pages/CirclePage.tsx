@@ -14,14 +14,17 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCircleDetail, useRemoveMember } from "@/hooks/useCircles";
+import { useCharges } from "@/hooks/useCharges";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import { ChargeCard } from "@/components/app/ChargeCard";
 
 export default function CirclePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
   const { data: circle, isLoading, error } = useCircleDetail(id!);
+  const { data: charges, isLoading: chargesLoading } = useCharges(id!);
   const removeMember = useRemoveMember();
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -228,21 +231,37 @@ export default function CirclePage() {
           </div>
         </div>
 
-        {/* Charges section — Phase 3 placeholder */}
+        {/* Charges section */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-foreground">Charges</h2>
-            <Button id="add-charge-btn" size="sm" disabled>
+            <Button id="add-charge-btn" size="sm" onClick={() => navigate(`/circle/${id}/charge/new`)}>
               <Plus className="w-4 h-4 mr-1.5" />
               Add Charge
-              <span className="ml-2 text-xs opacity-60">(Phase 3)</span>
             </Button>
           </div>
-          <div className="text-center py-10">
-            <p className="text-muted-foreground text-sm">
-              No charges yet. Charges coming in Phase 3!
-            </p>
-          </div>
+          
+          {chargesLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : charges && charges.length > 0 ? (
+            <div className="space-y-4">
+              {charges.map((charge) => (
+                <ChargeCard 
+                  key={charge.id} 
+                  charge={charge} 
+                  onClick={() => navigate(`/charge/${charge.id}`)} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground text-sm">
+                No charges yet.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </div>
