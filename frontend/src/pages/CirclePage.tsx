@@ -238,7 +238,7 @@ export default function CirclePage() {
             <Button
               id="add-charge-btn"
               size="sm"
-              onClick={() => navigate(`/circles/${id}/charges/new`)}
+              onClick={() => navigate(`/circle/${id}/charge/new`)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="w-4 h-4 mr-1.5" />
@@ -251,7 +251,7 @@ export default function CirclePage() {
               {charges.map((charge) => (
                 <div
                   key={charge.id}
-                  onClick={() => navigate(`/circles/${id}/charges/${charge.id}`)}
+                  onClick={() => navigate(`/charge/${charge.id}`)}
                   className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 cursor-pointer transition-colors border border-border/50"
                 >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
