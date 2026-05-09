@@ -14,6 +14,8 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCircleDetail, useRemoveMember } from "@/hooks/useCircles";
+import { useCircleCharges } from "@/hooks/useCharges";
+import { formatCurrency } from "@/utils/formatCurrency";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +23,8 @@ export default function CirclePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
-  const { data: circle, isLoading, error } = useCircleDetail(id!);
+  const { data: circle, isLoading: circleLoading, error } = useCircleDetail(id!);
+  const { data: charges, isLoading: chargesLoading } = useCircleCharges(id!);
   const removeMember = useRemoveMember();
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -47,7 +50,7 @@ export default function CirclePage() {
     }
   };
 
-  if (isLoading) {
+  if (circleLoading || chargesLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-zettl-500 border-t-transparent rounded-full animate-spin" />
@@ -228,21 +231,59 @@ export default function CirclePage() {
           </div>
         </div>
 
-        {/* Charges section — Phase 3 placeholder */}
+        {/* Charges section */}
         <div className="glass-card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-foreground">Charges</h2>
-            <Button id="add-charge-btn" size="sm" disabled>
+            <Button
+              id="add-charge-btn"
+              size="sm"
+              onClick={() => navigate(`/circles/${id}/charges/new`)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
               <Plus className="w-4 h-4 mr-1.5" />
               Add Charge
-              <span className="ml-2 text-xs opacity-60">(Phase 3)</span>
             </Button>
           </div>
-          <div className="text-center py-10">
-            <p className="text-muted-foreground text-sm">
-              No charges yet. Charges coming in Phase 3!
-            </p>
-          </div>
+          
+          {charges && charges.length > 0 ? (
+            <div className="space-y-3">
+              {charges.map((charge) => (
+                <div
+                  key={charge.id}
+                  onClick={() => navigate(`/circles/${id}/charges/${charge.id}`)}
+                  className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/30 cursor-pointer transition-colors border border-border/50"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-foreground truncate">
+                      {charge.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      Paid by {charge.payer_name} • {new Date(charge.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-semibold text-sm text-foreground">
+                      {formatCurrency(charge.total_amount)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider">
+                      {charge.split_type} SPLIT
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 border border-dashed border-border rounded-xl">
+              <Zap className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">
+                No charges yet.
+              </p>
+            </div>
+          )}
         </div>
       </main>
     </div>
